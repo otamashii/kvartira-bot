@@ -1,4 +1,8 @@
 import os
+import subprocess
+subprocess.run(["pip", "install", "python-telegram-bot"])
+
+from telegram import Update
 from datetime import date, datetime, timedelta, time, timezone
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
