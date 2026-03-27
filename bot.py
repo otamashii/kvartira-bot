@@ -193,7 +193,8 @@ def main():
     )
 
     print("Bot ishga tushdi...")
-app.run_polling(drop_pending_updates=True, allowed_updates=[])
+    app.run_polling(drop_pending_updates=True)
+
 
 if __name__ == "__main__":
     main()
