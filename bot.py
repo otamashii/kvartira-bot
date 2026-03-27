@@ -1,8 +1,4 @@
 import os
-import subprocess
-subprocess.run(["pip", "install", "python-telegram-bot"])
-
-from telegram import Update
 from datetime import date, datetime, timedelta, time, timezone
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
@@ -12,54 +8,99 @@ CHAT_ID = int(os.getenv("CHAT_ID"))
 
 UZ_TZ = timezone(timedelta(hours=5))
 
-cleaning_start_date = date(2026, 3, 22)
-cleaning_groups = [
-    "Bobursan & Bobur",
-    "Shahriyor & Javohir",
-    "Akbarali & Suhrob",
-    "Shoxrux & Asilbek",
-]
+# =========================
+# TOZALASH JADVALI
+# =========================
+cleaning_schedule = {
+    "2026-03-22": "Bobursan & Bobur",
+    "2026-03-29": "Shahriyor & Javohir",
 
-shopping_start_date = date(2026, 3, 15)
-shopping_groups = [
-    "Shoxrux & Asilbek",
-    "Akbarali & Suhrob",
-    "Shahriyor & Bobursan",
-]
+    "2026-04-05": "Akbarali & Suhrob",
+    "2026-04-12": "Shoxrux & Asilbek",
+    "2026-04-19": "Bobursan & Bobur",
+    "2026-04-26": "Shahriyor & Javohir",
+
+    "2026-05-03": "Akbarali & Suhrob",
+    "2026-05-10": "Shoxrux & Asilbek",
+    "2026-05-17": "Bobursan & Bobur",
+    "2026-05-24": "Shahriyor & Javohir",
+    "2026-05-31": "Akbarali & Suhrob",
+
+    "2026-06-07": "Shoxrux & Asilbek",
+    "2026-06-14": "Bobursan & Bobur",
+    "2026-06-21": "Shahriyor & Javohir",
+    "2026-06-28": "Akbarali & Suhrob",
+
+    "2026-07-05": "Shoxrux & Asilbek",
+    "2026-07-12": "Bobursan & Bobur",
+    "2026-07-19": "Shahriyor & Javohir",
+    "2026-07-26": "Akbarali & Suhrob",
+}
+
+# =========================
+# BOZORLIK JADVALI
+# =========================
+shopping_schedule = {
+    "2026-03-15": "Shoxrux & Asilbek",
+    "2026-03-22": "Akbarali & Suhrob",
+    "2026-03-29": "Shahriyor & Bobursan",
+
+    "2026-04-05": "Shoxrux & Asilbek",
+    "2026-04-12": "Akbarali & Suhrob",
+    "2026-04-19": "Shahriyor & Bobursan",
+    "2026-04-26": "Shoxrux & Asilbek",
+
+    "2026-05-03": "Akbarali & Suhrob",
+    "2026-05-10": "Shahriyor & Bobursan",
+    "2026-05-17": "Shoxrux & Asilbek",
+    "2026-05-24": "Akbarali & Suhrob",
+    "2026-05-31": "Shahriyor & Bobursan",
+
+    "2026-06-07": "Shoxrux & Asilbek",
+    "2026-06-14": "Akbarali & Suhrob",
+    "2026-06-21": "Shahriyor & Bobursan",
+    "2026-06-28": "Shoxrux & Asilbek",
+
+    "2026-07-05": "Akbarali & Suhrob",
+    "2026-07-12": "Shahriyor & Bobursan",
+    "2026-07-19": "Shoxrux & Asilbek",
+    "2026-07-26": "Akbarali & Suhrob",
+}
 
 def next_sunday(today: date) -> date:
     days_until_sunday = (6 - today.weekday()) % 7
     return today + timedelta(days=days_until_sunday)
 
 def get_cleaning_group(target_date: date) -> str:
-    weeks_passed = (target_date - cleaning_start_date).days // 7
-    index = weeks_passed % len(cleaning_groups)
-    return cleaning_groups[index]
+    key = target_date.strftime("%Y-%m-%d")
+    return cleaning_schedule.get(key, "Navbat yo‘q")
 
 def get_shopping_group(target_date: date) -> str:
-    weeks_passed = (target_date - shopping_start_date).days // 7
-    index = weeks_passed % len(shopping_groups)
-    return shopping_groups[index]
+    key = target_date.strftime("%Y-%m-%d")
+    return shopping_schedule.get(key, "Navbat yo‘q")
 
+# =========================
+# COMMANDS
+# =========================
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = (
         "🤖 Kvartira Navbat Bot komandalar:\n\n"
-        "/thisweek - Shu haftadagi navbatlar\n"
-        "/tomorrow - Ertangi navbatlar\n"
-        "/cleaning - Shu haftadagi tozalash navbati\n"
-        "/shopping - Shu haftadagi bozorlik navbati\n"
-        "/help - Komandalar ro'yxati"
+        "/thisweek - Shu haftadagi navbat\n"
+        "/tomorrow - Ertangi navbat\n"
+        "/cleaning - Tozalash navbati\n"
+        "/shopping - Bozorlik navbati\n"
     )
     await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
 
 async def this_week(update: Update, context: ContextTypes.DEFAULT_TYPE):
     today = datetime.now(UZ_TZ).date()
     sunday = next_sunday(today)
+
     cleaning = get_cleaning_group(sunday)
     shopping = get_shopping_group(sunday)
 
     text = (
-        f"📢 Shu hafta navbatlar:\n\n"
+        f"📢 Shu hafta navbat:\n\n"
         f"🧹 Tozalash: {cleaning}\n"
         f"🛒 Bozorlik: {shopping}\n\n"
         f"📅 Sana: {sunday.strftime('%d-%m-%Y')}"
@@ -69,6 +110,7 @@ async def this_week(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def tomorrow_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     today = datetime.now(UZ_TZ).date()
     tomorrow = today + timedelta(days=1)
+
     cleaning = get_cleaning_group(tomorrow)
     shopping = get_shopping_group(tomorrow)
 
@@ -85,42 +127,36 @@ async def cleaning_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     sunday = next_sunday(today)
     cleaning = get_cleaning_group(sunday)
 
-    text = (
-        f"🧹 Shu haftadagi tozalash navbati:\n\n"
-        f"{cleaning}\n\n"
-        f"📅 Sana: {sunday.strftime('%d-%m-%Y')}"
-    )
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=f"🧹 Tozalash: {cleaning}")
 
 async def shopping_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     today = datetime.now(UZ_TZ).date()
     sunday = next_sunday(today)
     shopping = get_shopping_group(sunday)
 
-    text = (
-        f"🛒 Shu haftadagi bozorlik navbati:\n\n"
-        f"{shopping}\n\n"
-        f"📅 Sana: {sunday.strftime('%d-%m-%Y')}"
-    )
-    await context.bot.send_message(chat_id=update.effective_chat.id, text=text)
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=f"🛒 Bozorlik: {shopping}")
 
+# =========================
+# AUTO MESSAGES
+# =========================
 async def send_weekly_notice(context: ContextTypes.DEFAULT_TYPE):
     today = datetime.now(UZ_TZ).date()
     sunday = next_sunday(today)
+
     cleaning = get_cleaning_group(sunday)
     shopping = get_shopping_group(sunday)
 
     text = (
-        f"📢 Bu hafta navbatlar:\n\n"
+        f"📢 Bu hafta navbat:\n\n"
         f"🧹 Tozalash: {cleaning}\n"
-        f"🛒 Bozorlik: {shopping}\n\n"
-        f"📅 Sana: {sunday.strftime('%d-%m-%Y')}"
+        f"🛒 Bozorlik: {shopping}\n"
     )
     await context.bot.send_message(chat_id=CHAT_ID, text=text)
 
 async def send_tomorrow_notice(context: ContextTypes.DEFAULT_TYPE):
     today = datetime.now(UZ_TZ).date()
     tomorrow = today + timedelta(days=1)
+
     cleaning = get_cleaning_group(tomorrow)
     shopping = get_shopping_group(tomorrow)
 
@@ -128,17 +164,14 @@ async def send_tomorrow_notice(context: ContextTypes.DEFAULT_TYPE):
         f"⏰ Eslatma:\n"
         f"Ertaga navbat kuni.\n\n"
         f"🧹 Tozalash: {cleaning}\n"
-        f"🛒 Bozorlik: {shopping}\n\n"
-        f"📅 Sana: {tomorrow.strftime('%d-%m-%Y')}"
+        f"🛒 Bozorlik: {shopping}"
     )
     await context.bot.send_message(chat_id=CHAT_ID, text=text)
 
+# =========================
+# MAIN
+# =========================
 def main():
-    if not TOKEN:
-        raise ValueError("BOT_TOKEN topilmadi")
-    if not CHAT_ID:
-        raise ValueError("CHAT_ID topilmadi")
-
     app = ApplicationBuilder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("help", help_command))
